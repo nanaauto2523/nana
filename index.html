@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ลับสมองประลองปัญญา</title>
+<style>
+:root{--blue:#00a2ff;--green:#02b757;--red:#e2231a;--yellow:#ffd400;--ink:#1b1b2f;--paper:#fff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;font-family:"Tahoma","Noto Sans Thai","Sarabun",sans-serif;color:var(--ink);
+ background:#5ec6ff;background-image:linear-gradient(#0000 94%,#0002 0),linear-gradient(90deg,#0000 94%,#0002 0);background-size:48px 48px}
+.scr{display:none;min-height:100%;padding:14px;max-width:760px;margin:auto;flex-direction:column;gap:12px;align-items:center}
+.scr.on{display:flex}
+.panel{background:var(--paper);border:4px solid var(--ink);border-radius:12px;box-shadow:0 6px 0 var(--ink);padding:14px;width:100%}
+h1{font-size:clamp(28px,7vw,48px);margin:8px 0;color:var(--yellow);-webkit-text-stroke:2px var(--ink);text-shadow:0 5px 0 var(--ink);text-align:center;line-height:1.2}
+h2{margin:0 0 8px}
+button,input{font:inherit}
+.btn{border:4px solid var(--ink);border-radius:10px;background:var(--green);color:#fff;font-weight:700;font-size:20px;padding:10px 18px;
+ box-shadow:0 6px 0 var(--ink);cursor:pointer;width:100%;text-shadow:0 2px 0 #0004}
+.btn:active{transform:translateY(5px);box-shadow:0 1px 0 var(--ink)}
+.btn.b{background:var(--blue)}.btn.y{background:var(--yellow);color:var(--ink);text-shadow:none}.btn.r{background:var(--red)}
+.btn:disabled{filter:grayscale(1);opacity:.6}
+.btn:focus-visible,input:focus-visible{outline:4px solid #fff;outline-offset:2px}
+input{width:100%;padding:10px;border:3px solid var(--ink);border-radius:8px;margin:4px 0 8px;font-size:18px}
+.row{display:flex;gap:10px;width:100%}.row>*{flex:1}
+.hud{display:flex;gap:8px;width:100%;font-weight:700}
+.hud div{flex:1;background:var(--yellow);border:3px solid var(--ink);border-radius:8px;padding:4px 8px;text-align:center;box-shadow:0 4px 0 var(--ink)}
+#pic{position:relative;width:min(100%,420px);aspect-ratio:4/3;border:4px solid var(--ink);border-radius:10px;background:#bff0ff;
+ display:flex;align-items:center;justify-content:center;font-size:clamp(60px,18vw,110px);overflow:hidden;box-shadow:0 6px 0 var(--ink)}
+#grid{position:absolute;inset:0;display:grid}
+.tile{background:var(--blue);border:2px solid var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;transition:opacity .4s,transform .4s}
+.tile.open{opacity:0;pointer-events:none;transform:scale(.6)}
+#choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+@media(max-width:520px){#choices{grid-template-columns:1fr}}
+#hint{min-height:24px;font-weight:700;text-align:center}
+.modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;padding:14px;z-index:9}
+.modal.on{display:flex}.modal .panel{max-width:460px;text-align:center}
+.big{font-size:84px;line-height:1}
+.shake{animation:sh .4s}@keyframes sh{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+.wob{display:inline-block;animation:wob .6s infinite alternate}@keyframes wob{to{transform:rotate(18deg) scale(1.15)}}
+table{width:100%;border-collapse:collapse}td,th{border-bottom:2px solid #ddd;padding:4px;text-align:left}
+.small{font-size:14px;color:#555}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ===== หน้า 0: ระบุตัวตนนักเรียน ===== -->
+<section class="scr on" id="s-login">
+ <h1>🧠 ลับสมอง<br>ประลองปัญญา</h1>
+ <div class="panel">
+  <h2>🎮 ใส่ชื่อผู้เล่น</h2>
+  <label>ชื่อ-นามสกุล<input id="in-name" autocomplete="off"></label>
+  <label>เลขที่ / รหัสนักเรียน<input id="in-id" autocomplete="off"></label>
+  <label>ห้อง (เช่น ม.4/1)<input id="in-cls" autocomplete="off"></label>
+  <button class="btn" onclick="login()">เข้าสู่เกม</button>
+ </div>
+</section>
+
+<!-- ===== หน้า 1: หน้าจอหลัก ===== -->
+<section class="scr" id="s-menu">
+ <h1>🧠 ลับสมอง<br>ประลองปัญญา</h1>
+ <div class="panel" style="text-align:center">สวัสดี <b id="who"></b> 👋</div>
+ <button class="btn" onclick="startGame()">▶ Start Game</button>
+ <button class="btn b" onclick="show('s-how')">❓ How to Play</button>
+ <button class="btn y" onclick="showScores()">🏆 High Scores / Dashboard</button>
+ <div class="row"><button class="btn r" onclick="toggleMusic()" id="bm">🎵 ดนตรี: ปิด</button><button class="btn r" onclick="show('s-login')">🔁 เปลี่ยนผู้เล่น</button></div>
+</section>
+
+<section class="scr" id="s-how">
+ <h1>❓ วิธีเล่น</h1>
+ <div class="panel">
+  <p>1️⃣ กดแผ่นจิ๊กซอว์สีฟ้า หรือปุ่ม "เปิดชิ้นต่อไป" เพื่อเปิดภาพทีละชิ้น</p>
+  <p>2️⃣ เดาว่าภาพนี้คือสำนวนสุภาษิตใด แล้วเลือกคำตอบ</p>
+  <p>3️⃣ ยิ่งเปิดชิ้นน้อย ยิ่งได้คะแนนมาก ⭐</p>
+  <p>4️⃣ ตอบผิด ❌ ต้องแสดงท่าทางสัตว์เป็นบทลงโทษ!</p>
+  <p>5️⃣ ปุ่ม 💡 Hint ให้ความหมาย (หักคะแนน) / ⏭ Skip ข้ามข้อ (ไม่ได้คะแนน)</p>
+  <p>มี 3 ด่าน ด่านละ 5 สำนวน ยิ่งด่านสูง จิ๊กซอว์ยิ่งชิ้นเล็กและเยอะขึ้น</p>
+ </div>
+ <button class="btn" onclick="show('s-menu')">⬅ กลับ</button>
+</section>
+
+<!-- ===== หน้า 2: หน้าจอเกม ===== -->
+<section class="scr" id="s-game">
+ <div class="hud"><div id="h-lv">ด่าน 1</div><div id="h-q">ข้อ 1/5</div><div>⭐ <span id="h-sc">0</span></div><div>⏱ <span id="h-t">0:00</span></div></div>
+ <div id="pic"><span id="emoji"></span><div id="grid"></div></div>
+ <div id="hint"></div>
+ <div id="choices"></div>
+ <div class="row">
+  <button class="btn b" id="b-open" onclick="openNext()">🧩 เปิดชิ้นต่อไป</button>
+  <button class="btn y" id="b-hint" onclick="useHint()">💡 Hint</button>
+  <button class="btn r" id="b-skip" onclick="skipQ()">⏭ Skip</button>
+ </div>
+</section>
+
+<!-- ===== หน้า 3: ตารางคะแนน / Dashboard รายบุคคล ===== -->
+<section class="scr" id="s-score">
+ <h1>🏆 Dashboard</h1>
+ <div class="panel" id="dash"></div>
+ <div class="panel"><h2>อันดับสูงสุด</h2><div id="board"></div></div>
+ <div class="row"><button class="btn" onclick="show('s-menu')">⬅ กลับ</button><button class="btn b" onclick="exportCSV()">⬇ CSV</button></div>
+</section>
+
+<!-- ===== หน้าต่างผลลัพธ์: ถูก / ผิด + บทลงโทษ ===== -->
+<div class="modal" id="m-res"><div class="panel" id="m-body"></div></div>
+
+<script>
+/* =====================================================
+   ข้อมูลเกม — แก้ไข Array นี้เพื่อเพิ่ม/เปลี่ยนสำนวน
+   lv: ด่าน (1-3) | pic: อิโมจิแทนภาพ | ans: สำนวน | mean: ความหมาย
+   wrong: ตัวเลือกหลอก (เลือกใช้ 3 ข้อ)
+   ===================================================== */
+const PROVERBS=[
+ {lv:1,pic:"🌊🪣",ans:"น้ำขึ้นให้รีบตัก",mean:"เมื่อมีโอกาสให้รีบฉวยไว้"},
+ {lv:1,pic:"🐘🦗",ans:"ขี่ช้างจับตั๊กแตน",mean:"ลงทุนมากเกินความจำเป็น"},
+ {lv:1,pic:"🦯🐘",ans:"ตาบอดคลำช้าง",mean:"รู้เห็นเพียงส่วนเดียวแล้วสรุปทั้งหมด"},
+ {lv:1,pic:"🐸👑",ans:"กบเลือกนาย",mean:"เลือกมากจนได้ของที่แย่กว่าเดิม"},
+ {lv:1,pic:"🧂🥣",ans:"ใกล้เกลือกินด่าง",mean:"ทิ้งของดีใกล้ตัว ไปหาของไกลตัว"},
+ {lv:2,pic:"🐔💎",ans:"ไก่ได้พลอย",mean:"ได้สิ่งมีค่าแต่ไม่รู้คุณค่า"},
+ {lv:2,pic:"🐯🐊",ans:"หนีเสือปะจระเข้",mean:"พ้นจากภัยหนึ่งแล้วเจออีกภัยหนึ่ง"},
+ {lv:2,pic:"🐂🚧",ans:"วัวหายล้อมคอก",mean:"เสียหายแล้วจึงค่อยป้องกัน"},
+ {lv:2,pic:"🐟💬",ans:"ปลาหมอตายเพราะปาก",mean:"เดือดร้อนเพราะพูดไม่ระวัง"},
+ {lv:2,pic:"🎻🐃",ans:"สีซอให้ควายฟัง",mean:"สอนหรือพูดกับคนที่ไม่เข้าใจ"},
+ {lv:3,pic:"🐰💥",ans:"กระต่ายตื่นตูม",mean:"ตื่นกลัวโดยไม่รู้ความจริง"},
+ {lv:3,pic:"🐱🐭🎉",ans:"แมวไม่อยู่หนูร่าเริง",mean:"ไม่มีผู้ควบคุมก็ทำตามใจ"},
+ {lv:3,pic:"🌊🪵",ans:"น้ำลดตอผุด",mean:"เมื่อหมดอำนาจ ความจริงก็เปิดเผย"},
+ {lv:3,pic:"🧵🪡",ans:"เข้าด้ายเข้าเข็ม",mean:"ถึงคราวคับขันจำเป็น"},
+ {lv:3,pic:"🪙🛕",ans:"ปิดทองหลังพระ",mean:"ทำดีโดยไม่ได้รับการยกย่อง"}
+];
+/* ตั้งค่าด่าน: cols x rows = จำนวนชิ้นจิ๊กซอว์ (ด่านสูง = ชิ้นเยอะ/เล็กลง), คะแนนต่อชิ้น */
+const LEVELS=[{c:3,r:2,pt:10},{c:3,r:3,pt:15},{c:4,r:3,pt:20}];
+/* บทลงโทษ: แสดงท่าทางสัตว์ */
+const ANIMALS=[
+ {e:"🐔",t:"ท่าไก่: กระพือปีกแล้วขัน เอ้กอีเอ้กเอ้ก 3 ครั้ง"},
+ {e:"🐘",t:"ท่าช้าง: แกว่งแขนเป็นงวงช้าง แล้วร้องแปร๋น"},
+ {e:"🐸",t:"ท่ากบ: นั่งยองๆ กระโดด 3 ครั้ง"},
+ {e:"🐒",t:"ท่าลิง: เกาหัว เกาแขน แล้วทำเสียงอู๊กๆ"},
+ {e:"🦆",t:"ท่าเป็ด: เดินเป็ดไป 5 ก้าว พร้อมร้องก๊าบๆ"},
+ {e:"🐱",t:"ท่าแมว: เลียมือแล้วขู่ฟ่อ แล้วร้องเมี้ยว"},
+ {e:"🦅",t:"ท่านกอินทรี: กางแขนกว้าง ทำท่าบินร่อน"}
+];
+
+/* ---------- ตัวแปรสถานะ ---------- */
+const $=id=>document.getElementById(id);
+let user=null,lvl=0,qs=[],qi=0,score=0,opened=0,total=0,hintUsed=false,wrongQ=0,
+    gStart=0,qStart=0,timer=null,log={correct:0,wrong:0,skip:0,hint:0};
+const shuffle=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+const fmt=s=>Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+function show(id){document.querySelectorAll(".scr").forEach(s=>s.classList.toggle("on",s.id===id))}
+
+/* ---------- ฐานข้อมูลนักเรียน (localStorage; ใช้ try/catch กันกรณีถูกบล็อก) ---------- */
+const KEY="lapsmong_v1";
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return window._db||{}}}
+function save(d){window._db=d;try{localStorage.setItem(KEY,JSON.stringify(d))}catch(e){}}
+
+function login(){
+ const n=$("in-name").value.trim(),i=$("in-id").value.trim(),c=$("in-cls").value.trim();
+ if(!n||!i){alert("กรุณาใส่ชื่อและรหัสนักเรียน");return}
+ user={id:i,name:n,cls:c};$("who").textContent=n;show("s-menu");
+}
+
+/* ---------- เสียง: ดนตรีสังเคราะห์ด้วย Web Audio (ไม่ใช้ไฟล์ภายนอก) ---------- */
+let ac=null,musicOn=false,mi=0,mt=null;
+const NOTES=[523,587,659,784,659,587,523,392,440,523,659,587,523,440,392,330];
+function ctx(){if(!ac)ac=new (window.AudioContext||window.webkitAudioContext)();return ac}
+function beep(f,d=.15,type="square",v=.08){try{const a=ctx(),o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=f;
+ g.gain.value=v;g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+d)}catch(e){}}
+function toggleMusic(){musicOn=!musicOn;$("bm").textContent="🎵 ดนตรี: "+(musicOn?"เปิด":"ปิด");
+ clearInterval(mt);if(musicOn){mt=setInterval(()=>{beep(NOTES[mi++%NOTES.length],.3,"triangle",.05)},320)}}
+
+/* ---------- เริ่มเกม / ด่าน ---------- */
+function startGame(){lvl=0;score=0;log={correct:0,wrong:0,skip:0,hint:0};gStart=Date.now();
+ clearInterval(timer);timer=setInterval(()=>{$("h-t").textContent=fmt((Date.now()-gStart)/1000)},500);beginLevel()}
+function beginLevel(){qs=shuffle(PROVERBS.filter(p=>p.lv===lvl+1));qi=0;show("s-game");loadQ()}
+
+/* โหลดคำถามแต่ละข้อ: สร้างกริดจิ๊กซอว์ + ตัวเลือก */
+function loadQ(){
+ const q=qs[qi],L=LEVELS[lvl];total=L.c*L.r;opened=0;hintUsed=false;wrongQ=0;qStart=Date.now();
+ $("h-lv").textContent="ด่าน "+(lvl+1);$("h-q").textContent="ข้อ "+(qi+1)+"/"+qs.length;$("h-sc").textContent=score;
+ $("emoji").textContent=q.pic;$("hint").textContent="";
+ const g=$("grid");g.style.gridTemplateColumns=`repeat(${L.c},1fr)`;g.innerHTML="";
+ for(let i=0;i<total;i++){const t=document.createElement("div");t.className="tile";t.textContent="?";t.onclick=()=>openTile(t);g.appendChild(t)}
+ const opts=shuffle([q.ans,...shuffle(PROVERBS.filter(p=>p.lv===q.lv&&p!==q)).slice(0,3).map(p=>p.ans)]);
+ $("choices").innerHTML="";
+ opts.forEach(o=>{const b=document.createElement("button");b.className="btn b";b.textContent=o;b.onclick=()=>answer(b,o===q.ans);$("choices").appendChild(b)});
+ ["b-open","b-hint","b-skip"].forEach(i=>$(i).disabled=false);
+}
+function openTile(t){if(t.classList.contains("open"))return;t.classList.add("open");opened++;beep(660,.08);if(opened>=total)$("b-open").disabled=true}
+function openNext(){const t=[...document.querySelectorAll(".tile:not(.open)")];if(t.length)openTile(t[Math.floor(Math.random()*t.length)])}
+function useHint(){if(hintUsed)return;hintUsed=true;log.hint++;$("hint").textContent="💡 ความหมาย: "+qs[qi].mean+" (−10 คะแนน)";$("b-hint").disabled=true}
+
+/* ตรวจคำตอบ: คะแนน = (ชิ้นที่ยังไม่เปิด + 1) x คะแนนต่อชิ้น − 10 ถ้าใช้ Hint */
+function answer(btn,ok){
+ if(ok){
+  const pts=Math.max(5,(total-opened+1)*LEVELS[lvl].pt-(hintUsed?10:0)-wrongQ*10);
+  score+=pts;log.correct++;$("h-sc").textContent=score;
+  document.querySelectorAll(".tile").forEach(t=>t.classList.add("open"));
+  [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.15,"square"),i*90));
+  modal(`<div class="big">✅</div><h2>ถูกต้อง! +${pts} คะแนน</h2><p><b>${qs[qi].ans}</b><br>${qs[qi].mean}</p><button class="btn" onclick="nextQ()">ไปต่อ ▶</button>`);
+ }else{
+  wrongQ++;log.wrong++;btn.disabled=true;beep(150,.4,"sawtooth",.1);
+  const a=ANIMALS[Math.floor(Math.random()*ANIMALS.length)];
+  modal(`<div class="big shake">❌</div><h2>ตอบผิด!</h2><p>บทลงโทษ: แสดงท่าทางสัตว์</p><div class="big"><span class="wob">${a.e}</span></div><p><b>${a.t}</b></p><button class="btn y" onclick="closeModal()">ทำเสร็จแล้ว 👍 ลองใหม่</button>`);
+ }
+}
+function skipQ(){log.skip++;nextQ()}
+function modal(h){$("m-body").innerHTML=h;$("m-res").classList.add("on")}
+function closeModal(){$("m-res").classList.remove("on")}
+function nextQ(){closeModal();qi++;if(qi<qs.length){loadQ();return}
+ if(lvl<2){modal(`<div class="big">🎉</div><h2>ผ่านด่าน ${lvl+1}!</h2><p>คะแนนรวม ⭐ ${score}</p><button class="btn" onclick="lvl++;closeModal();beginLevel()">ด่านต่อไป ▶</button>`)}
+ else endGame()}
+
+/* จบเกม: บันทึกสถิติรายบุคคล */
+function endGame(){
+ clearInterval(timer);const secs=Math.round((Date.now()-gStart)/1000),d=load();
+ const u=d[user.id]||{name:user.name,cls:user.cls,games:[]};u.name=user.name;u.cls=user.cls;
+ u.games.push({date:new Date().toLocaleString("th-TH"),score,secs,...log});d[user.id]=u;save(d);
+ modal(`<div class="big">🏆</div><h2>จบเกม!</h2><p>${user.name}<br>คะแนน ⭐ ${score}<br>เวลา ⏱ ${fmt(secs)}<br>ถูก ${log.correct} | ผิด ${log.wrong} | ข้าม ${log.skip}</p><button class="btn y" onclick="closeModal();showScores()">ดู Dashboard</button><button class="btn" onclick="closeModal();show('s-menu')">กลับเมนู</button>`);
+}
+
+/* ---------- Dashboard & High Scores ---------- */
+function showScores(){
+ const d=load(),u=d[user.id],g=u?u.games:[];
+ const best=g.reduce((m,x)=>Math.max(m,x.score),0),t=g.reduce((s,x)=>s+x.secs,0);
+ const ok=g.reduce((s,x)=>s+x.correct,0),all=g.reduce((s,x)=>s+x.correct+x.wrong+x.skip,0);
+ $("dash").innerHTML=`<h2>📊 ${user.name} (${user.id})</h2><p>เล่นแล้ว <b>${g.length}</b> ครั้ง | คะแนนสูงสุด <b>${best}</b><br>เวลารวม <b>${fmt(t)}</b> | ความแม่นยำ <b>${all?Math.round(ok/all*100):0}%</b></p>`
+  +(g.length?`<table><tr><th>วันที่</th><th>คะแนน</th><th>เวลา</th></tr>${g.slice(-5).reverse().map(x=>`<tr><td class="small">${x.date}</td><td>${x.score}</td><td>${fmt(x.secs)}</td></tr>`).join("")}</table>`:"<p>ยังไม่มีสถิติ เริ่มเล่นเลย!</p>");
+ const rows=Object.entries(d).map(([id,v])=>({n:v.name,c:v.cls,s:Math.max(...v.games.map(x=>x.score))})).sort((a,b)=>b.s-a.s).slice(0,10);
+ $("board").innerHTML=rows.length?`<table>${rows.map((r,i)=>`<tr><td>${["🥇","🥈","🥉"][i]||i+1}</td><td>${r.n} <span class="small">${r.c}</span></td><td>${r.s}</td></tr>`).join("")}</table>`:"—";
+ show("s-score");
+}
+/* ส่งออก CSV สำหรับครู (เปิดด้วย Excel ได้) */
+function exportCSV(){
+ const d=load();let c="\uFEFFรหัส,ชื่อ,ห้อง,วันที่,คะแนน,เวลา(วินาที),ถูก,ผิด,ข้าม,ใช้Hint\n";
+ for(const id in d)d[id].games.forEach(x=>c+=[id,d[id].name,d[id].cls,'"'+x.date+'"',x.score,x.secs,x.correct,x.wrong,x.skip,x.hint].join(",")+"\n");
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([c],{type:"text/csv"}));a.download="scores.csv";a.click();
+}
+</script>
+</body>
+</html>
